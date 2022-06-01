@@ -25,13 +25,13 @@ namespace Curso.Classes
             int idade = dataAtual.Year - DataNascimento.Year;
 
             if (dataAtual.Month < DataNascimento.Month ||
-               (dataAtual.Month == DataNascimento.Month &&
-                dataAtual.Day < DataNascimento.Day))
+                (dataAtual.Month == DataNascimento.Month &&
+                 dataAtual.Day < DataNascimento.Day))
             {
                 idade--;
             }
 
-            if (idade >= 18)
+            if (idade >= 18 && idade <= 100)
             {
                 return true;
             }
@@ -41,17 +41,37 @@ namespace Curso.Classes
 
         public override float PagarImposto(float rendimento)
         {
-            throw new NotImplementedException();
+            float desconto;
+
+            if (rendimento <= 1500)
+            {
+                desconto = 0;
+            }
+            else if (rendimento <= 3500)
+            {
+                desconto = (rendimento / 100) * 2f;
+            }
+            else if (rendimento <= 6000)
+            {
+                desconto = (rendimento / 100) * 3.5f;
+            }
+            else
+            {
+                desconto = (rendimento / 100) * 5.5f;
+            }
+
+            return desconto;
         }
 
         public override string ToString()
         {
-            string maiorDeIdade = ValidarNascimento() ? "Sim" : "Não";
+            string idadeValida = ValidarNascimento() ? "Sim" : "Não";
 
             return base.ToString()
             + "CPF: " + Cpf
             + "\nData de nascimento: " + DataNascimento
-            + "\nMaior de idade: " + maiorDeIdade
+            + "\nIdade válida: " + idadeValida
+            + "\nTaxa de imposto a ser pago: " + PagarImposto(Rendimento).ToString("C")
             + "\n";
         }
     }
