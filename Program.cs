@@ -1,79 +1,98 @@
 using Curso.Classes;
 
-Endereco endPj1 = new Endereco("Rua fulano", "4009", "Condomínio", true);
-PessoaJuridica pj1 = new PessoaJuridica();
+//Construção do menu.
+Console.WriteLine;
 
-pj1.Nome =  "Nome";
-pj1.RazaoSocial = "Pessoa jurídica";
-pj1.Cnpj = "66.743.394/1996-21";
-pj1.Endereco = endPj1;
-pj1.Rendimento = 46560F;
+CarregarBarraDeProgresso("Carregando", ".", 10, 500,
+ ConsoleColor.DarkGreen, ConsoleColor.DarkGray);
+
+string? opcao;
+
+do
+{
+
+    Console.Clear();
+    Console.WriteLine;
+
+    Console.Write("Insira uma opção: ");
+
+    opcao = Console.ReadLine();
+
+    switch (opcao)
+    {
+        case "1":
+            PessoaFisica pf = new PessoaFisica();
+            Endereco ender = new Endereco();
+
+            ender.Logradouro = "Rua fulano";
+            ender.Numero = "300";
+            ender.Complemento = "Condomínio";
+            ender.EndComercial = false;
+
+            pf.Nome = "Carly";
+            pf.DataNascimento = new DateTime(1996, 06, 25);
+            pf.Rendimento = 2880F;
+            pf.Endereco = ender;
+
+            Console.Clear();
+            Console.WriteLine($"Nome: { pf.Nome }");
+            Console.Write($"Logradouro: { pf.Endereco.Logradouro }");
+            Console.WriteLine($", { pf.Endereco.Numero } ");
+          
+           
+            string idadeValida = pf.ValidarNascimento() ? "Sim" : "Não";
+            Console.WriteLine($"Idade válida: { idadeValida }");
+
+            Console.WriteLine();
+            Console.WriteLine("Pressione qualquer tecla para continuar...");
+            Console.ReadKey();
+            break;
+
+        case "2":
+            PessoaJuridica pj = new PessoaJuridica(
+                "Nome 2",
+                new Endereco("Rua ciclano", "800", "Prédio", true),
+                50000F,
+                "68.964.532/1783-23",
+                "Pessoa jurídica 2"
+            );
+
+            Console.Clear();
+            Console.WriteLine(pj);
+            Console.WriteLine();
+            Console.WriteLine("Pressione qualquer tecla para continuar...");
+            Console.ReadKey();
+            break;
+
+        case "3":
+            Console.Clear();
+            Console.WriteLine("Obrigado por utilizar nosso sistema!");
+            CarregarBarraDeProgresso("Finalizando", "\tbye!", 2, 1000,
+             ConsoleColor.Blue, ConsoleColor.White);
+            break;
+
+        default:
+            Console.Write("Opção inválida!");
+            Thread.Sleep(2000);
+            break;
+    }
+
+} while (opcao != "0");
 
 
-Console.WriteLine(@$"
------------------------------------------------
-Pessoa Jurídica 1 (Usuário insere CNPJ válido).
------------------------------------------------
-{ pj1 }
+static void CarregarBarraDeProgresso(string status, string caracter, int repeticoes,
+int tempo, ConsoleColor corDeFundo, ConsoleColor corDaFonte)
+{
+    Console.BackgroundColor = corDeFundo;
+    Console.ForegroundColor = corDaFonte;
 
-");
+    Console.Write($"{ status } ");
 
+    for (int i = 0; i < repeticoes; i++)
+    {
+        Thread.Sleep(tempo);
+        Console.Write($"{ caracter }");
+    }
 
-pj1.Cnpj = "66743394199621";
-
-Console.WriteLine(@$"
---------------------------------------------
-Pessoa Jurídica 1 (Usuário insere apenas 
-números no CNPJ).
---------------------------------------------
-{ pj1 }
-
-");
-
-
-pj1.Cnpj = "66743394199621";
-Console.WriteLine(@$"
-----------------------------------------------
-Pessoa Jurídica 1 (Usuário insere caractere 
-separador 'traço' ao invés de 'ponto' no 
-número-base do CNPJ, sendo portanto, inválido).
-----------------------------------------------
-{ pj1 }
-
-");
-
-Endereco endPj2 = new Endereco("Rua beltrano", "200", "condomínio", true);
-PessoaJuridica pj2 = new PessoaJuridica();
-
-pj2.Nome =  "Nome 2";
-pj2.RazaoSocial = "Pessoa jurídica 2";
-pj2.Cnpj = "67.783.334/1496-31";
-pj2.Endereco = endPj2;
-pj2.Rendimento = 40570F;
-
-
-Console.WriteLine(@$"
--------------------------------------------------
-Pessoa Jurídica 2 (Usuário insere CNPJ inválido).
--------------------------------------------------
-{ pj2 }
-
-");
-
-
-Endereco endPj3 = new Endereco("Rua ciclano", "2233", "Condomínio", true);
-PessoaJuridica pj3 = new PessoaJuridica();
-
-pj3.Nome =  "Nome 3";
-pj3.RazaoSocial = "Pessoa jurídica 3";
-pj3.Cnpj = "32.448.645/2012-66";
-pj3.Endereco = endPj3;
-pj3.Rendimento = 67340F;
-
-Console.WriteLine(@$"
------------------------------------------------
-Pessoa Jurídica 3 (Usuário insere CNPJ válido).
------------------------------------------------
-{ pj3 }
-
-");
+    Console.ResetColor();
+}
