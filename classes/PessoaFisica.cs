@@ -1,5 +1,5 @@
-using System.Text.RegularExpressions;
 using Curso.Interfaces;
+using System.Text.RegularExpressions;
 
 namespace Curso.Classes
 {
@@ -7,8 +7,8 @@ namespace Curso.Classes
     {
         public string? Cpf { get; set; }
         public DateTime DataNascimento { get; set; }
-        public string Caminho { get; private set; } = "Database/PessoaFisica.csv";
-       
+        public string CaminhoRelativo { get; private set; } = "Database/PessoaFisica/";
+
         public PessoaFisica()
         {
         }
@@ -114,6 +114,29 @@ namespace Curso.Classes
             }
         }
 
+        public bool ExisteCpf(string? cpf)
+        {
+            cpf = RemoveMascaraCpf(cpf);
+
+            VerificarPasta(CaminhoRelativo);
+
+            DirectoryInfo directoryInfo = new DirectoryInfo(CaminhoRelativo);
+
+            FileInfo[] arquivos = directoryInfo.GetFiles("*.txt");
+
+            string cpfNomeArquivo;
+            foreach (FileInfo cadaArquivo in arquivos)
+            {
+                cpfNomeArquivo = Path.GetFileNameWithoutExtension(cadaArquivo.Name.Split("-")[1]);
+
+                if (cpfNomeArquivo.Equals(cpf))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public override float PagarImposto(float rendimento)
         {
             float desconto;
@@ -140,90 +163,95 @@ namespace Curso.Classes
 
         public void Inserir(PessoaFisica pf)
         {
-            VerificarPastaArquivo(Caminho);
+            string caminho = Path.Combine(CaminhoRelativo, $"{ pf.Nome }-{ pf.Cpf }.txt");
 
-            string[] pfString =
-            { $"{ pf.Nome },{ pf.Endereco?.Logradouro },{ pf.Endereco?.Numero},{ pf.Endereco?.Complemento},{ pf.Endereco?.EndComercial },{ pf.Rendimento },{ pf.Cpf },{ pf.DataNascimento } " };
+            VerificarPastaArquivo(caminho);
 
-            File.AppendAllLines(Caminho, pfString);
+            using (StreamWriter sw = new StreamWriter(caminho))
+            {
+                string pfString = $"{ pf.Nome };{ pf.Endereco?.Logradouro };{ pf.Endereco?.Numero };{ pf.Endereco?.Complemento };{ pf.Endereco?.EndComercial };{ pf.Rendimento };{ pf.Cpf };{ pf.DataNascimento }";
+                sw.Write(pfString);
+            }
         }
 
         public List<PessoaFisica> Ler()
         {
             List<PessoaFisica> listaPf = new List<PessoaFisica>();
 
-            VerificarPastaArquivo(Caminho);
+            VerificarPasta(CaminhoRelativo);
 
-            string[] linhas = File.ReadAllLines(Caminho);
+            DirectoryInfo directoryInfo = new DirectoryInfo(CaminhoRelativo);
 
-            foreach (string cadaLinha in linhas)
+            FileInfo[] arquivos = directoryInfo.GetFiles("*.txt");
+
+            string[] atributos;
+            foreach (FileInfo cadaArquivo in arquivos)
             {
-                string[] atributos = cadaLinha.Split(",");
+                using (StreamReader sr = cadaArquivo.OpenText())
+                {
+                    string? linha ;
+                    while (!sr.EndOfStream)
+                    {
+                        linha = sr.ReadLine();
+                        atributos = linha.Split(";");
+                        PessoaFisica pf = new PessoaFisica();
+                        Endereco ender = new Endereco();
 
-                PessoaFisica cadaPf = new PessoaFisica();
-                Endereco cadaEnder = new Endereco();
+                        pf.Nome = atributos[0];
+                        ender.Logradouro = atributos[1];
+                        ender.Numero = atributos[2];
+                        ender.Complemento = atributos[3];
+                        ender.EndComercial = Boolean.Parse(atributos[4]);
+                        pf.Endereco = ender;
+                        pf.Rendimento = float.Parse(atributos[5]);
+                        pf.Cpf = InsereMascaraCpf(atributos[6]);
+                        pf.DataNascimento = DateTime.Parse(atributos[7]);
 
-                cadaPf.Nome = atributos[0];
-                cadaEnder.Logradouro = atributos[1];
-                cadaEnder.Numero = atributos[2];
-                cadaEnder.Complemento = atributos[3];
-                cadaEnder.EndComercial = bool.Parse(atributos[4]);
-                cadaPf.Endereco = cadaEnder;
-                cadaPf.Rendimento = float.Parse(atributos[5]);
-                cadaPf.Cpf = InsereMascaraCpf(atributos[6]);
-                cadaPf.DataNascimento = DateTime.Parse(atributos[7]);
-
-                listaPf.Add(cadaPf);
+                        listaPf.Add(pf);
+                    }
+                }
             }
             return listaPf;
         }
 
-        public bool ExisteCpf(string? cpf)
-        {
-            cpf = RemoveMascaraCpf(cpf);
-
-            VerificarPastaArquivo(Caminho);
-
-            string[] cadastros = File.ReadAllLines(Caminho);
-
-            string cpfCadastrado;
-            foreach (string cadastro in cadastros)
-            {
-                cpfCadastrado = cadastro.Split(",")[6];
-                if (cpfCadastrado.Equals(cpf))
-                    return true;
-            }
-            return false;
-        }
-
         public PessoaFisica? BuscarPessoaFisica(string? cpf)
         {
-            VerificarPastaArquivo(Caminho);
+            VerificarPasta(CaminhoRelativo);
 
-            string[] cadastros = File.ReadAllLines(Caminho);
+            DirectoryInfo directoryInfo = new DirectoryInfo(CaminhoRelativo);
 
-            string cpfCadastrado;
-            foreach (string cadastro in cadastros)
+            FileInfo[] arquivos = directoryInfo.GetFiles("*.txt");
+
+            string[] atributos;
+            string cpfNomeArquivo;
+            foreach (FileInfo cadaArquivo in arquivos)
             {
-                cpfCadastrado = cadastro.Split(",")[6];
+                cpfNomeArquivo = Path.GetFileNameWithoutExtension(cadaArquivo.Name.Split("-")[1]);
 
-                if (cpfCadastrado.Equals(cpf))
+                if (cpfNomeArquivo.Equals(cpf))
                 {
-                    PessoaFisica? pf = new PessoaFisica();
-                    Endereco enderPf = new Endereco();
-                    string[] atributos = cadastro.Split(",");
+                    using (StreamReader sr = cadaArquivo.OpenText())
+                    {
+                        string? linha;
+                        while ((linha = sr.ReadLine()) != null)
+                        {
+                            atributos = linha.Split(";");
+                            PessoaFisica pf = new PessoaFisica();
+                            Endereco ender = new Endereco();
 
-                    pf.Nome = atributos[0];
-                    enderPf.Logradouro = atributos[1];
-                    enderPf.Numero = atributos[2];
-                    enderPf.Complemento = atributos[3];
-                    enderPf.EndComercial = Boolean.Parse(atributos[4]);
-                    pf.Endereco = enderPf;
-                    pf.Rendimento = float.Parse(atributos[5]);
-                    pf.Cpf = InsereMascaraCpf(atributos[6]);
-                    pf.DataNascimento = DateTime.Parse(atributos[7]);
+                            pf.Nome = atributos[0];
+                            ender.Logradouro = atributos[1];
+                            ender.Numero = atributos[2];
+                            ender.Complemento = atributos[3];
+                            ender.EndComercial = Boolean.Parse(atributos[4]);
+                            pf.Endereco = ender;
+                            pf.Rendimento = float.Parse(atributos[5]);
+                            pf.Cpf = InsereMascaraCpf(atributos[6]);
+                            pf.DataNascimento = DateTime.Parse(atributos[7]);
 
-                    return pf;
+                            return pf;
+                        }
+                    }
                 }
             }
             return null;
@@ -231,41 +259,55 @@ namespace Curso.Classes
 
         public bool ExcluirPessoaFisica(string? cpf)
         {
-            VerificarPastaArquivo(Caminho);
+            VerificarPasta(CaminhoRelativo);
 
-            if (ExisteCpf(cpf))
+            DirectoryInfo directoryInfo = new DirectoryInfo(CaminhoRelativo);
+
+            FileInfo[] arquivos = directoryInfo.GetFiles("*.txt");
+
+            string cpfNomeArquivo;
+            foreach (FileInfo cadaArquivo in arquivos)
             {
-                File.WriteAllLines(Caminho,
-                 File.ReadAllLines(Caminho).Where(cadaLinha => cadaLinha.Split(",")[6] != cpf).ToList());
+                cpfNomeArquivo = Path.GetFileNameWithoutExtension(cadaArquivo.Name.Split("-")[1]);
 
-                return true;
+                if (cpfNomeArquivo.Equals(cpf))
+                {
+                    cadaArquivo.Delete();
+                    return true;
+                }
             }
-
             return false;
         }
 
         public void ExcluirTodasPessoasFisicas()
         {
-            VerificarPastaArquivo(Caminho);
+            VerificarPasta(CaminhoRelativo);
 
-            File.Delete(Caminho);
+            DirectoryInfo directoryInfo = new DirectoryInfo(CaminhoRelativo);
+
+            FileInfo[] arquivos = directoryInfo.GetFiles("*.txt");
+
+            foreach (FileInfo cadaArquivo in arquivos)
+            {
+                cadaArquivo.Delete();
+            }
         }
 
         public void EditarPessoaFisica(PessoaFisica pf)
         {
-            VerificarPastaArquivo(Caminho);
-
-             File.WriteAllLines(Caminho,
-                 File.ReadAllLines(Caminho).Where(cadaLinha => cadaLinha.Split(",")[6] != pf.Cpf).ToList());
-
-             Inserir(pf);
+            ExcluirPessoaFisica(pf.Cpf);
+            Inserir(pf);
         }
 
         public int TotalPessoasFisicas()
         {
-            VerificarPastaArquivo(Caminho);
+            VerificarPasta(CaminhoRelativo);
 
-            return File.ReadAllLines(Caminho).Count();
+            DirectoryInfo directoryInfo = new DirectoryInfo(CaminhoRelativo);
+
+            FileInfo[] arquivos = directoryInfo.GetFiles("*.txt");
+
+            return arquivos.Length;
         }
 
         public string? RemoveMascaraCpf(string? cpf)
