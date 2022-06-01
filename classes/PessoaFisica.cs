@@ -71,7 +71,6 @@ namespace Curso.Classes
                     if (cpf.All(c => c.Equals(cpf.First())))
                         return false;
 
-                    //Define a variável acumuladora como zero.
                     somatorio = 0;
 
                     cpfAux = cpf.Substring(0, 9);
