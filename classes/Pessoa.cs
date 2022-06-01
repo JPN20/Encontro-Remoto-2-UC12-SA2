@@ -7,7 +7,7 @@ namespace Curso.Classes
     {
         public string? Nome { get; set; }
         public Endereco? Endereco { get; set; }
-        public float? Rendimento { get; set; }
+        public float Rendimento { get; set; }
 
         public Pessoa()
         {
@@ -19,6 +19,14 @@ namespace Curso.Classes
             Endereco = endereco;
             Rendimento = rendimento;
         }
+
+        public Pessoa(Pessoa pessoa)
+        {
+           Nome = pessoa.Nome;
+           Endereco = pessoa.Endereco;
+           Rendimento = pessoa.Rendimento;
+        }
+
         public abstract float PagarImposto(float rendimento);
 
         public override string ToString()
@@ -27,7 +35,7 @@ namespace Curso.Classes
             
             sb.AppendLine("Nome: " + Nome);
             sb.AppendLine(Endereco?.ToString());
-            sb.AppendLine("Rendimento: " + Rendimento?.ToString("C"));
+            sb.AppendLine("\tRendimento: " + Rendimento.ToString("C"));
 
             return sb.ToString();
         }
