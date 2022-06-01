@@ -29,6 +29,21 @@ namespace Curso.Classes
 
         public abstract float PagarImposto(float rendimento);
 
+        public void VerificarPastaArquivo(string caminho)
+        {
+            string pasta = caminho.Split("/")[0];
+
+            if(!Directory.Exists(pasta))
+            {
+               Directory.CreateDirectory(pasta);
+            }
+
+            if(!File.Exists(caminho))
+            {
+                using(File.Create(caminho)){}
+            }
+        }
+
         public override string ToString()
         { 
             StringBuilder sb = new StringBuilder();
