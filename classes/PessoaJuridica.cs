@@ -7,7 +7,7 @@ namespace Curso.Classes
     {
         public string? Cnpj { get; set; }
         public string? RazaoSocial { get; set; }
-        public string Caminho { get; private set; } = "Database/PessoaJuridica.csv";
+        public string CaminhoRelativo { get; private set; } = "Database/PessoaJuridica/";
 
         public PessoaJuridica()
         {
@@ -52,6 +52,7 @@ namespace Curso.Classes
 
         public bool ValidarCnpj(string? cnpj)
         {
+
             int[] multiplicador1 = new int[12] { 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2 };
             int[] multiplicador2 = new int[13] { 6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2 };
             int somatorio;
@@ -61,7 +62,6 @@ namespace Curso.Classes
 
             try
             {
-
                 if (String.IsNullOrEmpty(cnpj))
                     return false;
 
@@ -69,7 +69,6 @@ namespace Curso.Classes
 
                 if (Regex.IsMatch(cnpj, @"((\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2})|(\d{14}))"))
                 {
-
                     if (cnpj.Length == 18)
                         cnpj = cnpj.Replace(".", "").Replace("/", "").Replace("-", "");
 
@@ -120,90 +119,120 @@ namespace Curso.Classes
 
         }
 
+        public bool ExisteCnpj(string? cnpj)
+        {
+            cnpj = RemoveMascaraCnpj(cnpj);
+
+            VerificarPasta(CaminhoRelativo);
+
+            DirectoryInfo directoryInfo = new DirectoryInfo(CaminhoRelativo);
+
+            FileInfo[] arquivos = directoryInfo.GetFiles("*.txt");
+
+            string cnpjNomeArquivo;
+            foreach (FileInfo cadaArquivo in arquivos)
+            {
+                cnpjNomeArquivo = Path.GetFileNameWithoutExtension(cadaArquivo.Name.Split("-")[1]);
+
+                if (cnpjNomeArquivo.Equals(cnpj))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
         public void Inserir(PessoaJuridica pj)
         {
-            VerificarPastaArquivo(Caminho);
+            string caminho = Path.Combine(CaminhoRelativo, $"{ pj.Nome }-{ pj.Cnpj }.txt");
 
-            string[] pjString = { $"{ pj.Nome },{ pj.Endereco?.Logradouro },{ pj.Endereco?.Numero},{ pj.Endereco?.Complemento},{ pj.Endereco?.EndComercial },{ pj.Rendimento },{ pj.Cnpj },{ pj.RazaoSocial } " };
+            VerificarPastaArquivo(caminho);
 
-            File.AppendAllLines(Caminho, pjString);
+            using (StreamWriter sw = new StreamWriter(caminho))
+            {
+                string pjString = $"{ pj.Nome };{ pj.Endereco?.Logradouro };{ pj.Endereco?.Numero };{ pj.Endereco?.Complemento };{ pj.Endereco?.EndComercial };{ pj.Rendimento };{ pj.Cnpj };{ pj.RazaoSocial }";
+                sw.Write(pjString);
+            }
         }
 
         public List<PessoaJuridica> Ler()
         {
             List<PessoaJuridica> listaPj = new List<PessoaJuridica>();
 
-            VerificarPastaArquivo(Caminho);
+            VerificarPasta(CaminhoRelativo);
 
-            string[] linhas = File.ReadAllLines(Caminho);
+            DirectoryInfo directoryInfo = new DirectoryInfo(CaminhoRelativo);
 
-            foreach (string cadaLinha in linhas)
+            FileInfo[] arquivos = directoryInfo.GetFiles("*.txt");
+
+            string[] atributos;
+            foreach (FileInfo cadaArquivo in arquivos)
             {
-                string[] atributos = cadaLinha.Split(",");
+                using (StreamReader sr = cadaArquivo.OpenText())
+                {
+                    string? linha;
+                    while (!sr.EndOfStream)
+                    {
+                        linha = sr.ReadLine();
+                        atributos = linha.Split(";");
+                        PessoaJuridica pj = new PessoaJuridica();
+                        Endereco ender = new Endereco();
 
-                PessoaJuridica cadaPj = new PessoaJuridica();
-                Endereco cadaEnder = new Endereco();
+                        pj.Nome = atributos[0];
+                        ender.Logradouro = atributos[1];
+                        ender.Numero = atributos[2];
+                        ender.Complemento = atributos[3];
+                        ender.EndComercial = Boolean.Parse(atributos[4]);
+                        pj.Endereco = ender;
+                        pj.Rendimento = float.Parse(atributos[5]);
+                        pj.Cnpj = InsereMascaraCnpj(atributos[6]);
+                        pj.RazaoSocial = atributos[7];
 
-                cadaPj.Nome = atributos[0];
-                cadaEnder.Logradouro = atributos[1];
-                cadaEnder.Numero = atributos[2];
-                cadaEnder.Complemento = atributos[3];
-                cadaEnder.EndComercial = bool.Parse(atributos[4]);
-                cadaPj.Endereco = cadaEnder;
-                cadaPj.Rendimento = float.Parse(atributos[5]);
-                cadaPj.Cnpj = InsereMascaraCnpj(atributos[6]);
-                cadaPj.RazaoSocial = atributos[7];
-
-                listaPj.Add(cadaPj);
+                        listaPj.Add(pj);
+                    }
+                }
             }
             return listaPj;
         }
 
-        public bool ExisteCnpj(string? cnpj)
-        {
-            cnpj = RemoveMascaraCnpj(cnpj);
-
-            VerificarPastaArquivo(Caminho);
-
-            string[] cadastros = File.ReadAllLines(Caminho);
-
-            string cnpjCadastrado;
-            foreach (string cadastro in cadastros)
-            {
-                cnpjCadastrado = cadastro.Split(",")[6];
-                if (cnpjCadastrado.Equals(cnpj))
-                    return true;
-            }
-            return false;
-        }
-
         public PessoaJuridica? BuscarPessoaJuridica(string? cnpj)
         {
-            VerificarPastaArquivo(Caminho);
 
-            string[] cadastros = File.ReadAllLines(Caminho);
+            VerificarPasta(CaminhoRelativo);
 
-            string cnpjCadastrado;
-            foreach (string cadastro in cadastros)
+            DirectoryInfo directoryInfo = new DirectoryInfo(CaminhoRelativo);
+
+            FileInfo[] arquivos = directoryInfo.GetFiles("*.txt");
+
+            string[] atributos;
+            string cnpjNomeArquivo;
+            foreach (FileInfo cadaArquivo in arquivos)
             {
-                cnpjCadastrado = cadastro.Split(",")[6];
-                if (cnpjCadastrado.Equals(cnpj))
+                cnpjNomeArquivo = Path.GetFileNameWithoutExtension(cadaArquivo.Name.Split("-")[1]);
+
+                if (cnpjNomeArquivo.Equals(cnpj))
                 {
-                    PessoaJuridica? pj = new PessoaJuridica();
-                    Endereco enderPj = new Endereco();
-                    string[] atributos = cadastro.Split(",");
+                    using (StreamReader sr = cadaArquivo.OpenText())
+                    {
+                        string? linha;
+                        while ((linha = sr.ReadLine()) != null)
+                        {
+                            atributos = linha.Split(";");
+                            PessoaJuridica pj = new PessoaJuridica();
+                            Endereco ender = new Endereco();
 
-                    pj.Nome = atributos[0];
-                    enderPj.Logradouro = atributos[1];
-                    enderPj.Numero = atributos[2];
-                    enderPj.Complemento = atributos[3];
-                    enderPj.EndComercial = Boolean.Parse(atributos[4]);
-                    pj.Endereco = enderPj;
-                    pj.Rendimento = float.Parse(atributos[5]);
-                    pj.Cnpj = InsereMascaraCnpj(atributos[6]);
-                    pj.RazaoSocial = atributos[7];
+                            pj.Nome = atributos[0];
+                            ender.Logradouro = atributos[1];
+                            ender.Numero = atributos[2];
+                            ender.Complemento = atributos[3];
+                            ender.EndComercial = Boolean.Parse(atributos[4]);
+                            pj.Endereco = ender;
+                            pj.Rendimento = float.Parse(atributos[5]);
+                            pj.Cnpj = InsereMascaraCnpj(atributos[6]);
+                            pj.RazaoSocial = atributos[7];
 
-                    return pj;
+                            return pj;
+                        }
+                    }
                 }
             }
             return null;
@@ -211,43 +240,56 @@ namespace Curso.Classes
 
         public bool ExcluirPessoaJuridica(string? cnpj)
         {
-            VerificarPastaArquivo(Caminho);
+            VerificarPasta(CaminhoRelativo);
 
-            if (ExisteCnpj(cnpj))
+            DirectoryInfo directoryInfo = new DirectoryInfo(CaminhoRelativo);
+
+            FileInfo[] arquivos = directoryInfo.GetFiles("*.txt");
+
+            string cnpjNomeArquivo;
+            foreach (FileInfo cadaArquivo in arquivos)
             {
-                File.WriteAllLines(Caminho,
-                 File.ReadAllLines(Caminho).Where(cadaLinha => cadaLinha.Split(",")[6] != cnpj).ToList());
+                cnpjNomeArquivo = Path.GetFileNameWithoutExtension(cadaArquivo.Name.Split("-")[1]);
 
-                return true;
+                if (cnpjNomeArquivo.Equals(cnpj))
+                {
+                    cadaArquivo.Delete();
+                    return true;
+                }
             }
-
             return false;
         }
 
         public void ExcluirTodasPessoasJuridicas()
         {
-            VerificarPastaArquivo(Caminho);
+            VerificarPasta(CaminhoRelativo);
 
-            File.Delete(Caminho);
+            DirectoryInfo directoryInfo = new DirectoryInfo(CaminhoRelativo);
+
+            FileInfo[] arquivos = directoryInfo.GetFiles("*.txt");
+
+            foreach (FileInfo cadaArquivo in arquivos)
+            {
+                cadaArquivo.Delete();
+            }
         }
 
         public void EditarPessoaJuridica(PessoaJuridica pj)
         {
-            VerificarPastaArquivo(Caminho);
-
-            File.WriteAllLines(Caminho,
-                File.ReadAllLines(Caminho).Where(cadaLinha => cadaLinha.Split(",")[6] != pj.Cnpj).ToList());
-
+            ExcluirPessoaJuridica(pj.Cnpj);
             Inserir(pj);
         }
 
         public int TotalPessoasJuridicas()
         {
-            VerificarPastaArquivo(Caminho);
+            VerificarPasta(CaminhoRelativo);
 
-            return File.ReadAllLines(Caminho).Count();
+            DirectoryInfo directoryInfo = new DirectoryInfo(CaminhoRelativo);
+
+            FileInfo[] arquivos = directoryInfo.GetFiles("*.txt");
+
+            return arquivos.Length;
         }
-
 
         public string? RemoveMascaraCnpj(string? cnpj)
         {
