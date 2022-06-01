@@ -22,10 +22,29 @@ namespace Curso.Classes
 
         public override float PagarImposto(float rendimento)
         {
-            throw new NotImplementedException();
+            float desconto;
+
+            if (rendimento <= 3000)
+            {
+                desconto = rendimento * 0.03f;
+            }
+            else if (rendimento <= 6000)
+            {
+                desconto = rendimento * 0.05f;
+            }
+            else if (rendimento <= 10000)
+            {
+                desconto = rendimento * 0.07f;
+            }
+            else
+            {
+                desconto = rendimento * 0.09f;
+            }
+
+            return desconto;
         }
 
-        public bool ValidarCnpj(string? cnpj)
+       public bool ValidarCnpj(string? cnpj)
         {
 
             int[] multiplicador1 = new int[12] { 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2 };
@@ -37,6 +56,7 @@ namespace Curso.Classes
 
             try
             {
+
                 if (String.IsNullOrEmpty(cnpj))
                     return false;
 
@@ -94,7 +114,6 @@ namespace Curso.Classes
             }
 
         }
-
         public override string ToString()
         {
             string cnpjValido = "";
@@ -106,6 +125,7 @@ namespace Curso.Classes
             + "CNPJ: " + Cnpj
             + "\nRazão Social: " + RazaoSocial
             + "\nCNPJ válido: " + cnpjValido
+            + "\nTaxa de imposto a ser pago: " + PagarImposto(Rendimento).ToString("C")
             + "\n";
         }
     }
