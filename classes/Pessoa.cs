@@ -3,7 +3,7 @@ using Curso.Interfaces;
 
 namespace Curso.Classes
 {
-    public abstract class Pessoa: IPessoa
+    public abstract class Pessoa : IPessoa
     {
         public string? Nome { get; set; }
         public Endereco? Endereco { get; set; }
@@ -22,9 +22,9 @@ namespace Curso.Classes
 
         public Pessoa(Pessoa pessoa)
         {
-           Nome = pessoa.Nome;
-           Endereco = pessoa.Endereco;
-           Rendimento = pessoa.Rendimento;
+            Nome = pessoa.Nome;
+            Endereco = pessoa.Endereco;
+            Rendimento = pessoa.Rendimento;
         }
 
         public abstract float PagarImposto(float rendimento);
@@ -32,28 +32,39 @@ namespace Curso.Classes
         public void VerificarPastaArquivo(string caminho)
         {
             string pasta = caminho.Split("/")[0];
+            string subpasta = caminho.Split("/")[1];
 
-            if(!Directory.Exists(pasta))
+            string pastas = Path.Combine(pasta, subpasta);
+
+            if (!Directory.Exists(pastas))
             {
-               Directory.CreateDirectory(pasta);
+                Directory.CreateDirectory(pastas);
             }
 
-            if(!File.Exists(caminho))
+            if (!File.Exists(caminho))
             {
-                using(File.Create(caminho)){}
+                using (File.Create(caminho)) { }
+            }
+        }
+
+        public void VerificarPasta(string caminho)
+        {
+            if (!Directory.Exists(caminho))
+            {
+                Directory.CreateDirectory(caminho);
             }
         }
 
         public override string ToString()
-        { 
+        {
             StringBuilder sb = new StringBuilder();
-            
+
             sb.AppendLine("Nome: " + Nome);
             sb.AppendLine(Endereco?.ToString());
             sb.AppendLine("\tRendimento: " + Rendimento.ToString("C"));
 
             return sb.ToString();
         }
-    
+
     }
 }
